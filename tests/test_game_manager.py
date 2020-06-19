@@ -1,10 +1,15 @@
+import tkinter as tk
 import unittest
-from GameManager import GameManager
+from unittest import mock
+
 from AutoClickers import AutoClickers
+from GameManager import GameManager
 
 
 class TestGameManager(unittest.TestCase):
     def setUp(self):
+        self.root = tk.Tk()
+
         self.auto_clicker_1 = AutoClickers('Factory', 5.0, 15.0, 0)
         self.auto_clicker_2 = AutoClickers('Farm', 10.0, 50.0, 3)
         self.auto_clicker_3 = AutoClickers('House', 20.0, 100.0, 5)
@@ -13,6 +18,10 @@ class TestGameManager(unittest.TestCase):
                 self.auto_clicker_1, self.auto_clicker_2, self.auto_clicker_3
             ]
         )
+
+    def tearDown(self):
+        if self.root:
+            self.root.destroy()
 
     def test_convert_to_dictionary_format(self):
         auto_clicker_dict = {
@@ -48,3 +57,11 @@ class TestGameManager(unittest.TestCase):
         self.assertEqual(
             self.game_manager.auto_clickers['Farm'].player_quantity, 4
         )
+
+    @mock.patch('GameManager.GameManager.app')
+    def test_buy_one_auto_clicker_with_insufficient_funds(self,
+                                                          mock_gm_app):
+        self.game_manager.cookies = 0
+        self.game_manager.app = mock_gm_app
+        self.game_manager.buy_auto_clicker('Factory')
+        self.assertEqual(mock_gm_app.alert_user.call_count, 1)

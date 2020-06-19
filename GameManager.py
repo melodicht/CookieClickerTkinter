@@ -5,6 +5,8 @@ from AutoClickers import AutoClickers
 
 
 class GameManager:
+    app = None
+
     def __init__(self, app_instance=None, auto_clickers=None):
         if auto_clickers is None:
             self.create_auto_clickers()
