@@ -1,4 +1,3 @@
-import tkinter as tk
 import unittest
 from unittest import mock
 
@@ -66,3 +65,53 @@ class TestGameManager(unittest.TestCase):
         self.game_manager.app = mock_gm_app
         self.game_manager.buy_auto_clicker('Factory')
         self.assertEqual(mock_gm_app.alert_user.call_count, 1)
+
+    @mock.patch('GameManager.GameManager.app')
+    def test_update_cookie_number_display_with_buy(self, mock_gm_app):
+        self.game_manager.app = mock_gm_app
+        self.game_manager.cookies = 150
+
+        self.game_manager.buy_auto_clicker('Factory')
+        self.assertEqual(mock_gm_app.update_cookie_number_display.call_count,
+                         1)
+        mock_gm_app.update_cookie_number_display.assert_called_with(135)
+
+        self.game_manager.buy_auto_clicker('Farm')
+        self.assertEqual(mock_gm_app.update_cookie_number_display.call_count,
+                         2)
+        mock_gm_app.update_cookie_number_display.assert_called_with(85)
+
+        self.game_manager.cookies = 110
+        self.game_manager.buy_auto_clicker('House')
+        self.assertEqual(mock_gm_app.update_cookie_number_display.call_count,
+                         3)
+        mock_gm_app.update_cookie_number_display.assert_called_with(10)
+
+    @mock.patch('GameManager.GameManager.app')
+    def test_update_cookie_number_display_with_click(self, mock_gm_app):
+        self.game_manager.app = mock_gm_app
+        self.game_manager.cookies = 100
+
+        self.game_manager.player_click()
+        self.assertEqual(mock_gm_app.update_cookie_number_display.call_count,
+                         1)
+        mock_gm_app.update_cookie_number_display.assert_called_with(101)
+
+        self.game_manager.player_click()
+        self.assertEqual(mock_gm_app.update_cookie_number_display.call_count,
+                         2)
+        mock_gm_app.update_cookie_number_display.assert_called_with(102)
+
+    def test_buy_auto_clicker_actually_buys(self):
+        with mock.patch.object(self.game_manager, 'auto_clickers') as mock_ac:
+            self.game_manager.cookies = 150
+            mock_ac['Factory'].is_affordable.return_value = True
+            self.game_manager.buy_auto_clicker('Factory')
+            self.assertEqual(mock_ac['Factory'].buy.call_count, 1)
+            mock_ac['Factory'].buy.assert_called_with(150)
+
+            # If not enough, don't buy
+            self.game_manager.cookies = 0
+            mock_ac['Factory'].is_affordable.return_value = False
+            self.game_manager.buy_auto_clicker('Factory')
+            self.assertEqual(mock_ac['Factory'].buy.call_count, 1)
