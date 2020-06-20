@@ -43,7 +43,8 @@ class TestGameManager(unittest.TestCase):
         self.game_manager.buy_auto_clicker('Factory')
         self.assertEqual(self.game_manager.cookies, 135.0)
 
-    def test_buy_one_auto_clickers(self):
+    @mock.patch('GameManager.GameManager.app')
+    def test_buy_one_auto_clickers(self, mock_gm_app):
         self.game_manager.cookies = 150.0
 
         self.game_manager.buy_auto_clicker('Factory')
@@ -102,9 +103,27 @@ class TestGameManager(unittest.TestCase):
                          2)
         mock_gm_app.update_cookie_number_display.assert_called_with(102)
 
-    def test_buy_auto_clicker_actually_buys(self):
+    def test_update_cps_display_with_buy(self):
+        with mock.patch.object(self.game_manager, 'auto_clickers') as mock_ac:
+            # Not enough money, so no call
+            self.game_manager.cookies = 0
+            mock_ac['Factory'].is_affordable.return_value = False
+            self.game_manager.buy_auto_clicker('Factory')
+            self.assertEqual(mock_ac['Factory'].buy.call_count, 0)
+
+            # Have enough money now, so call once
+            self.game_manager.cookies = 150
+            mock_ac['Factory'].is_affordable.return_value = True
+            self.game_manager.buy_auto_clicker('Factory')
+            self.assertEqual(mock_ac['Factory'].buy.call_count, 1)
+            mock_ac['Factory'].buy.assert_called_with(150)
+
+    @mock.patch('GameManager.GameManager.app')
+    def test_buy_auto_clicker_actually_buys(self, mock_gm_app):
         with mock.patch.object(self.game_manager, 'auto_clickers') as mock_ac:
             self.game_manager.cookies = 150
+
+            # If have sufficient funds, buy
             mock_ac['Factory'].is_affordable.return_value = True
             self.game_manager.buy_auto_clicker('Factory')
             self.assertEqual(mock_ac['Factory'].buy.call_count, 1)
