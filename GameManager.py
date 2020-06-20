@@ -1,5 +1,5 @@
 import threading
-from functools import reduce
+import time
 
 from AutoClickers import AutoClickers
 
@@ -18,8 +18,14 @@ class GameManager:
 
         self.app = app_instance
 
-        # Begin cps loop
-        self.add_cookies_every_second()
+        self.cps_event = threading.Event()
+
+        # Begin cps thread
+        self.cps_thread = threading.Thread(
+            target=self.add_cookies_every_second
+        )
+        self.cps_thread.start()
+        self.cps_event.set()
 
     def create_auto_clickers(self):
         ac_1 = AutoClickers('Dough Roller', 0.1, 50, 0)
@@ -38,12 +44,14 @@ class GameManager:
         if self.auto_clickers[name].is_affordable(self.cookies):
             self.auto_clickers[name].buy(self.cookies)
             self.cookies -= self.auto_clickers[name].unit_price
+            self.app.update_cookie_number_display(self.cookies)
         else:
             if self.app is not None:
                 self.app.alert_user('You do not have enough cookies!')
 
     def player_click(self):
         self.cookies += 1
+        self.app.update_cookie_number_display(self.cookies)
 
     @property
     def total_auto_clicks_per_second(self):
@@ -53,10 +61,13 @@ class GameManager:
         )
 
     def add_cookies_every_second(self):
-        threading.Timer(1.0, self.add_cookies_every_second).start()
-        self.cookies += self.total_auto_clicks_per_second
-        if self.app is not None:
-            self.app.update_cookie_number_display(self.cookies)
+        self.cps_event.wait()
+        while self.cps_event.is_set():
+            self.cookies += self.total_auto_clicks_per_second
+            if self.app is not None:
+                self.app.update_cookie_number_display(self.cookies)
+            time.sleep(1)  # Wait one second
+
 
 # Testing purposes:
 # auto_clicker_1 = AutoClickers('Factory', 5.0, 15.0, 0)
