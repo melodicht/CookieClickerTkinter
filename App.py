@@ -13,6 +13,7 @@ class App(tk.Frame):
         self.master = master
         self.master.title("Cookie Clicker")
         self.master.geometry("400x400")
+        self.master.protocol("WM_DELETE_WINDOW", self.shut_down)
 
         self.cookie_number_display = tk.StringVar()
         self.message_display = tk.StringVar()
@@ -47,6 +48,10 @@ class App(tk.Frame):
         self.create_click_cookie_button()
         self.create_purchase_buttons()
         self.create_cookie_number_display()
+
+        self.quit = tk.Button(self, text="QUIT", fg="red",
+                              command=self.shut_down)
+        self.quit.pack(side="bottom")
 
     def create_click_cookie_button(self):
         self.click_button = ttk.Button(
@@ -92,6 +97,11 @@ class App(tk.Frame):
             message.forget()
 
         message.after(1500, on_after)
+
+    def shut_down(self):
+        self.game_manager.cps_event.clear()
+        self.game_manager.cps_thread.join()
+        self.master.destroy()
 
 
 if __name__ == '__main__':
